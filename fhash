@@ -1,0 +1,20 @@
+#!/usr/bin/env /bin/sh
+
+FILE="$1"
+SHORT=0
+
+[ -z "$1" ] && echo "[ fhash ] First argument should be either path to file or -s (short)" >&2 && exit 1
+
+if [ "$1" == "-s" ]; then
+    FILE="$2";
+    SHORT=1
+fi
+
+[ ! -f "$FILE" ] && echo "[ fhash ] Specify path to the file" >&2 && exit 1
+
+CMD="import hashlib; print hashlib.sha1(open('$FILE').read()).hexdigest()"
+if [ "$SHORT" == "0" ]; then
+    python -c "$CMD";
+else
+    python -c "$CMD[:8]";
+fi

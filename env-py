@@ -1,0 +1,84 @@
+#!/usr/bin/env /bin/sh
+# it is important to not use built-in `echo` or `printf` functions
+
+# pyenv arguments
+PYENV_ARGS=${PYENV_ARGS:-"--quiet"} # --system-site-packages
+
+HELP=$(cat <<EO
+Tool to create PYTHON virtualenvs and install requirements using PIP.
+Arguments:
+  1. Python version (for example: 2.7.12)
+  2. Main requirements file. Virtualenv name will be
+     created based on sha1 hash of it.
+  3. Optional requirements file. Will not affect hash.
+
+Virtual environment will be created using PYENV.
+Optional environment variables:
+  - DOWNLOAD_TO: path to PyPI packages downloads folder
+  - PYENV_ARGS: PyEnv custom arguments (current: ${PYENV_ARGS})
+
+All output are redirected to STDERR.
+Expected value from STDOUT: virtualenv name (ENV_ID)
+
+EO
+);
+
+CALLER="env-py"
+
+# system variables
+SCRIPT_BASE="${BASH_SOURCE%/*}";
+
+# start execution
+source "$SCRIPT_BASE/_env-check"
+
+# script-specific params
+PYTHON_VER="$1"
+REQS_FILE="$2"
+OPTIONAL_REQS_FILE="$3"
+DOWNLOAD_TEMP=${"DOWNLOAD_TO":-"/tmp/download"}
+
+help "$1" "$HELP";
+
+# script-specific checks
+[ -z "$PYTHON_VER" ] && abort "Specify Python version as first argument";
+[ -z "$REQS_FILE" ] && abort "Please, specify environment requirements file as second argument";
+[ ! -f "$REQS_FILE" ] && abort "Requirements file doesn't exist";
+[ ! -z "$OPTIONAL_REQS_FILE" ] && [ ! -f "$OPTIONAL_REQS_FILE" ] && abort "If you're specified optional requirements then file must exist";
+log "Creating directory for PIP downloads: $DOWNLOAD_TEMP";
+mkdir -p "$DOWNLOAD_TEMP" >&2;
+
+# main logic
+ENV_ID=$($SCRIPT_BASE/fhash -s $REQS_FILE)
+[ -z "$ENV_ID" ] && abort "Can't generage ENV_ID. Aborting..";
+log "Creating PyENV Virtual Environment: ${PYTHON_VER}/${ENV_ID}";
+
+# creating virtualenv
+pyenv virtualenv "${ENV_ID}" $PYENV_ARGS >&2
+
+# activating virtualenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+pyenv activate ${ENV_ID} >&2
+
+# installing requirements (optimized)
+log "Downloading dependencies into $DOWNLOAD_TEMP";
+cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
+    xargs -t -n1 -P9 -I {} pip download -q --dest "$DOWNLOAD_TEMP" "{}" >&2
+
+log "Installing dependencies from $REQS_FILE"
+cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
+    xargs -I {} pip install -q --no-index --find-links "$DOWNLOAD_TEMP" "{}" >&2;
+
+log "Install external dependencies from $REQS_FILE"
+cat ${REQS_FILE} | grep -v '^$' | grep '\-e ' | grep -v '^#' | \
+    awk '{print $2}' | \
+    xargs -I {} pip install --editable={} >&2;
+
+if [ -f "$OPTIONAL_REQS_FILE" ]; then
+    log "Installing optional dependencies (not optimized). Assuming it's short";
+    pip install -q -r $OPTIONAL_REQS_FILE >&2
+fi
+
+echo "$ENV_ID";

@@ -1,0 +1,88 @@
+#!/usr/bin/env /bin/sh
+# it is important to not use built-in `echo` or `printf` functions
+
+# pyenv arguments
+#PYENV_ARGS=${PYENV_ARGS:-"--quiet"} # --system-site-packages
+
+HELP=$(cat <<EO
+Tool to create JAVASCRIPT virtualenvs and install dependencies using NPM.
+Arguments:
+  1. NodeJS Version (for example: 2.7.12)
+  2. package.json file. Virtualenv name will be
+     created based on summary hash of dependencies
+     (dependencies, devDependencies)
+
+Virtual environment will be created using PYENV.
+Optional environment variables:
+  - DOWNLOAD_TO: path to PyPI packages downloads folder
+  - NPM_PREFIX: path where NPM packages should be installed
+All output are redirected to STDERR.
+Expected value from STDOUT: virtualenv name (ENV_ID).
+Run 'npm run start' with NODE_PATH pointed to '\$NPM_PREFIX/\$ENV_ID'
+
+EO
+);
+
+CALLER="env-js"
+
+# system variables
+SCRIPT_BASE="${BASH_SOURCE%/*}";
+
+# start execution
+source "$SCRIPT_BASE/_env-check"
+
+# script-specific params
+NODE_VER="$1"
+PACKAGE_JSON_FILE="$2"
+DOWNLOAD_TEMP=${DOWNLOAD_TO:-"/tmp/download"}
+NPM_PREFIX=${NPM_PREFIX:-"/opt/npm"}
+
+help "$1" "$HELP";
+
+# script-specific checks
+[ -z "$NVM_PREFIX" ] && abort "Please, specify NVM_PREFIX environment variable (with nvm.sh)";
+
+[ -z "$NODE_VER" ] && abort "Specify Node version as first argument";
+[ -z "$PACKAGE_JSON_FILE" ] && abort "Please, specify package.json file as second argument";
+[ ! -f "$PACKAGE_JSON_FILE" ] && abort "package.json doesn't exist";
+[ -z "$NPM_PREFIX" ] && abort "Please, specify NPM_PREFIX: it shouldn't be empty";
+[ ! -d "$NPM_PREFIX" ] && abort "Please, create '$NPM_PREFIX' directory first";
+
+log "Creating directory for NPM downloads: $DOWNLOAD_TEMP";
+mkdir -p "$DOWNLOAD_TEMP" >&2;
+
+log "Activating NVM in $NVM_PREFIX";
+[ ! -s "$NVM_PREFIX/nvm.sh" ] && abort "Can't find nvm.sh in $NVM_PREFIX";
+source "$NVM_PREFIX/nvm.sh"
+
+# main logic
+MERGED_DEPS="${DOWNLOAD_TEMP}/dependencies.json"
+jq -s ".[0].dependencies * .[1].devDependencies" \
+   "$PACKAGE_JSON_FILE"  "$PACKAGE_JSON_FILE" > "$MERGED_DEPS"
+
+ENV_ID=$($SCRIPT_BASE/fhash -s $MERGED_DEPS)
+[ -z "$ENV_ID" ] && abort "Can't generage ENV_ID. Aborting...";
+
+log "Setting NODE_ENV=production";
+export NODE_ENV=production
+
+log "Creating NVM Virtual Environment: ${NODE_VER}/${ENV_ID}";
+# creating nvm virtualenv
+nvm install $NODE_VER >&2
+nvm use $NODE_VER >&2
+
+NPM_DEST="$NPM_PREFIX/$ENV_ID";
+NPM_DEST_TMP="${NPM_DEST}.tmp"
+log "Installing dependencies into $NPM_DEST_TMP";
+
+npm install \
+    --prefix=$NPM_DEST_TMP \
+    --silent \
+    --loglevel=silent \
+    -g \
+    $(dirname $PACKAGE_JSON_FILE) >&2
+
+log "Finalizing $NPM_DEST_TMP -> $NPM_DEST";
+mv "$NPM_DEST_TMP" "$NPM_DEST"
+
+echo "$ENV_ID";
