@@ -35,7 +35,7 @@ source "$SCRIPT_BASE/_env-check"
 PYTHON_VER="$1"
 REQS_FILE="$2"
 OPTIONAL_REQS_FILE="$3"
-DOWNLOAD_TEMP=${"DOWNLOAD_TO":-"/tmp/download"}
+DOWNLOAD_TEMP=${DOWNLOAD_TO:-"/tmp/download"}
 
 help "$1" "$HELP";
 
@@ -52,6 +52,13 @@ ENV_ID=$($SCRIPT_BASE/fhash -s $REQS_FILE)
 [ -z "$ENV_ID" ] && abort "Can't generage ENV_ID. Aborting..";
 log "Creating PyENV Virtual Environment: ${PYTHON_VER}/${ENV_ID}";
 
+set -e
+function cleanup_on_error {
+    log "Cleaning up virtualenv $ENV_ID. Non-success exit";
+    # removing virtualenv
+    pyenv virtualenv-delete -f "${ENV_ID}"
+}
+
 # creating virtualenv
 pyenv virtualenv "${ENV_ID}" $PYENV_ARGS >&2
 
@@ -61,6 +68,8 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
 pyenv activate ${ENV_ID} >&2
+
+trap cleanup_on_error EXIT
 
 # installing requirements (optimized)
 log "Downloading dependencies into $DOWNLOAD_TEMP";
@@ -80,5 +89,5 @@ if [ -f "$OPTIONAL_REQS_FILE" ]; then
     log "Installing optional dependencies (not optimized). Assuming it's short";
     pip install -q -r $OPTIONAL_REQS_FILE >&2
 fi
-
+exit 1
 echo "$ENV_ID";

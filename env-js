@@ -72,6 +72,11 @@ nvm install $NODE_VER >&2
 nvm use $NODE_VER >&2
 
 NPM_DEST="$NPM_PREFIX/$ENV_ID";
+
+# if environment already exists
+[ -d "$NPM_DEST" ] && log "Environment $ENV_ID exists" && echo $ENV_ID && exit 0
+
+
 NPM_DEST_TMP="${NPM_DEST}.tmp"
 log "Installing dependencies into $NPM_DEST_TMP";
 
