@@ -1,5 +1,17 @@
 # Python/JavaScript Virtual Environments managing toolkit
 
+Bunch of **Bash** scripts which provide ability to manage
+virtual environments for **Python** and **JavaScript. Useful
+for deployment scripts or for **CI**.
+
+
+## Requirements
+
+Both tools are using same basic checks script which
+check for `pyenv`, `jq`, `node` and `npm` binaries. So,
+all are required in order to use **envmanage**.
+
+
 ## env-py
 
 Tool to create PYTHON virtualenvs and install requirements using PIP.
@@ -15,9 +27,15 @@ Optional environment variables:
 
   - `DOWNLOAD_TO`: path to PyPI packages downloads folder
   - `PYENV_ARGS`: PyEnv custom arguments (current: `${PYENV_ARGS}`)
+  - `SCRIPTS_BASE`: Path to `env-*` installation directory
 
 All output are redirected to `STDERR`.
 Expected value from `STDOUT`: virtualenv name (`ENV_ID`)
+
+Example:
+
+    DOWNLOAD_TEMP=/tmp/download \
+    ./env-py 2.7.12 /path/to/requirements.txt
 
 
 ## env-js
@@ -36,6 +54,7 @@ Optional environment variables:
 
   - `DOWNLOAD_TO`: path to NPM packages cache downloads folder
   - `NPM_PREFIX`: path where environments should be installed
+  - `SCRIPTS_BASE`: Path to `env-*` installation directory
 
 All output are redirected to `STDERR`.
 Expected value from `STDOUT`: virtualenv name (`ENV_ID`).

@@ -26,7 +26,7 @@ EO
 CALLER="env-js"
 
 # system variables
-SCRIPT_BASE="${BASH_SOURCE%/*}";
+SCRIPT_BASE=${SCRIPT_BASE:-"${BASH_SOURCE%/*"};
 
 # start execution
 source "$SCRIPT_BASE/_env-check"
@@ -60,7 +60,7 @@ MERGED_DEPS="${DOWNLOAD_TEMP}/dependencies.json"
 jq -s ".[0].dependencies * .[1].devDependencies" \
    "$PACKAGE_JSON_FILE"  "$PACKAGE_JSON_FILE" > "$MERGED_DEPS"
 
-ENV_ID=$($SCRIPT_BASE/fhash -s $MERGED_DEPS)
+ENV_ID=$($SCRIPT_BASE/file_hash -s $MERGED_DEPS)
 [ -z "$ENV_ID" ] && abort "Can't generage ENV_ID. Aborting...";
 
 log "Setting NODE_ENV=production";

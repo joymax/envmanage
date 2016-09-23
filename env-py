@@ -26,7 +26,7 @@ EO
 CALLER="env-py"
 
 # system variables
-SCRIPT_BASE="${BASH_SOURCE%/*}";
+SCRIPT_BASE=${SCRIPT_BASE:-"${BASH_SOURCE%/*"};
 
 # start execution
 source "$SCRIPT_BASE/_env-check"
@@ -48,7 +48,7 @@ log "Creating directory for PIP downloads: $DOWNLOAD_TEMP";
 mkdir -p "$DOWNLOAD_TEMP" >&2;
 
 # main logic
-ENV_ID=$($SCRIPT_BASE/fhash -s $REQS_FILE)
+ENV_ID=$($SCRIPT_BASE/file_hash -s $REQS_FILE)
 [ -z "$ENV_ID" ] && abort "Can't generage ENV_ID. Aborting..";
 log "Creating PyENV Virtual Environment: ${PYTHON_VER}/${ENV_ID}";
 
