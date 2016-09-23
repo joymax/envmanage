@@ -54,10 +54,16 @@ log "Creating PyENV Virtual Environment: ${PYTHON_VER}/${ENV_ID}";
 
 set -e
 function cleanup_on_error {
+    [ $? == 0 ] && exit 0
+
     log "Cleaning up virtualenv $ENV_ID. Non-success exit";
     # removing virtualenv
     pyenv virtualenv-delete -f "${ENV_ID}"
 }
+
+# do not try to create virtualenv once again
+[ "$(pyenv virtualenvs | grep $ENV_ID)" != "" ] && log "$ENV_ID already exist" && \
+    echo "$ENV_ID" && exit 0;
 
 # creating virtualenv
 pyenv virtualenv "${ENV_ID}" $PYENV_ARGS >&2
@@ -89,5 +95,5 @@ if [ -f "$OPTIONAL_REQS_FILE" ]; then
     log "Installing optional dependencies (not optimized). Assuming it's short";
     pip install -q -r $OPTIONAL_REQS_FILE >&2
 fi
-exit 1
+
 echo "$ENV_ID";
