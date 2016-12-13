@@ -1,0 +1,6 @@
+.PHONY: install
+
+install:
+	brew update
+	brew install python pyenv node npm
+	@echo Installation completed
