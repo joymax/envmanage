@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import copy
 import os
@@ -27,17 +27,19 @@ def pyenv_install(conf):
     if not os.path.exists(conf["pyenv_download"]):
         subprocess.check_output(["mkdir", "-p", conf["pyenv_download"]])
 
+    full_env = copy.deepcopy(os.environ)
     env = {
         "DOWNLOAD_TO": dst_conf["pyenv_download"],
         "HOME": os.environ["HOME"],
         "PYTHON_BUILD_CACHE_PATH": os.path.join(os.environ["HOME"], ".pyenv/cache")
     }
+    full_env.update(env)
 
     sys.stderr.write("PYENV COMMAND: %s\nENV: %s\n" % (cmd, " ".join(
         ["%s=%s" % (k, v) for k, v in env.items()])))
 
     proc = subprocess.Popen(
-        cmd, shell=True, env=env,
+        cmd, shell=True, env=full_env,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # printing stderr

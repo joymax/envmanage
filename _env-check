@@ -1,10 +1,9 @@
-#!/bin/sh
 
 # basic env checks
 [ -z "$CALLER" ] && echo "Specify CALLER env variable to detect script ID" && exit 1
 
 [ -z "$(type -p python)" ] && echo "[ $CALLER ] 'python' is required (type -p python)" && exit 1
-[ -z "$(type -p pyenv)" ] && echo "[ $CALLER ] 'pyenv' is not installed (type -p pyenv)" && exit 1
+[ -z "$(which pyenv)" ] && echo "[ $CALLER ] 'pyenv' is not installed (type -p pyenv)" && exit 1
 [ -z "$(type -p node)" ] && echo "[ $CALLER ] 'node' is not installed (type -p node)" && exit 1
 [ -z "$(type -p npm)" ] && echo "[ $CALLER ] 'npm' is not installed (type -p npm)" && exit 1
 

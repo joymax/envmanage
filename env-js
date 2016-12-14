@@ -1,4 +1,4 @@
-#!/usr/bin/env /bin/sh
+#!/usr/bin/env /bin/bash
 
 # it is important to not use built-in `echo` or `printf` functions
 
