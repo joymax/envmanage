@@ -31,11 +31,15 @@ SCRIPT_BASE=${SCRIPT_BASE:-"${BASH_SOURCE%/*}"};
 # start execution
 source "$SCRIPT_BASE/_env-check"
 
+[ -z "$(type -p python)" ] && echo "[ $CALLER ] 'python' is required (type -p python)" && exit 1
+[ -z "$(which pyenv)" ] && echo "[ $CALLER ] 'pyenv' is not installed (type -p pyenv)" && exit 1
+
 # script-specific params
 PYTHON_VER="$1"
 REQS_FILE="$2"
 OPTIONAL_REQS_FILE="$3"
 DOWNLOAD_TEMP=${DOWNLOAD_TO:-"/tmp/download"}
+DEBUG=${DEBUG:-""}
 
 help "$1" "$HELP";
 
@@ -51,6 +55,8 @@ mkdir -p "$DOWNLOAD_TEMP" >&2;
 ENV_ID=$($SCRIPT_BASE/file_hash -s $REQS_FILE)
 [ -z "$ENV_ID" ] && abort "Can't generage ENV_ID. Aborting..";
 log "Creating PyENV Virtual Environment: ${PYTHON_VER}/${ENV_ID}";
+
+export PYENV_VERSION=${PYTHON_VER};
 
 set -e
 function cleanup_on_error {
@@ -77,23 +83,27 @@ pyenv activate ${ENV_ID} >&2
 
 trap cleanup_on_error EXIT
 
+PIP_FLAGS="-q"
+
+[ -z "$DEBUG" ] && PIP_FLAGS=""
+
 # installing requirements (optimized)
 log "Downloading dependencies into $DOWNLOAD_TEMP";
 cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
-    xargs -t -n1 -P9 -I {} pip download -q --dest "$DOWNLOAD_TEMP" "{}" >&2
+    xargs -t -n1 -P9 -I {} pip download $PIP_FLAGS --dest "$DOWNLOAD_TEMP" "{}" >&2
 
 log "Installing dependencies from $REQS_FILE"
 cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
-    xargs -I {} pip install -q --no-index --find-links "$DOWNLOAD_TEMP" "{}" >&2;
+    xargs -I {} pip install $PIP_FLAGS --no-index --find-links "$DOWNLOAD_TEMP" "{}" >&2;
 
 log "Install external dependencies from $REQS_FILE"
 cat ${REQS_FILE} | grep -v '^$' | grep '\-e ' | grep -v '^#' | \
     awk '{print $2}' | \
-    xargs -I {} pip install --editable={} >&2;
+    xargs -I {} pip install $PIP_FLAGS --editable={} >&2;
 
 if [ -f "$OPTIONAL_REQS_FILE" ]; then
     log "Installing optional dependencies (not optimized). Assuming it's short";
-    pip install -q -r $OPTIONAL_REQS_FILE >&2
+    pip install $PIP_FLAGS -r $OPTIONAL_REQS_FILE >&2
 fi
 
 echo "$ENV_ID";

@@ -44,6 +44,9 @@ SCRIPT_BASE=${SCRIPT_BASE:-"${BASH_SOURCE%/*}"};
 # start execution
 source "$SCRIPT_BASE/_env-check"
 
+[ -z "$(type -p node)" ] && echo "[ $CALLER ] 'node' is not installed (type -p node)" && exit 1
+[ -z "$(type -p npm)" ] && echo "[ $CALLER ] 'npm' is not installed (type -p npm)" && exit 1
+
 # script-specific params
 NODE_VER="$1"
 PACKAGE_FILE=$(normalize_path "$2")
