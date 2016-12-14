@@ -105,6 +105,7 @@ trap cleanup_on_error EXIT
 log "Installing YARN package manager into $NPM_DEST_TMP";
 npm install \
     --silent \
+    --progress=false \
     --loglevel=silent \
     --prefix=$NPM_DEST_TMP/lib \
     yarnpkg yarn >&2
@@ -114,6 +115,7 @@ cd $(dirname $PACKAGE_FILE)
 log "Installing dependencies into $NPM_DEST_TMP";
 NODE_PATH=$NPM_DEST_TMP/lib/node_modules \
     $NPM_DEST_TMP/lib/node_modules/.bin/yarn \
+    --no-progress \
     --production \
     --prefix=$NPM_DEST_TMP \
     --modules-folder=$NPM_DEST_TMP/lib/node_modules \
