@@ -83,9 +83,8 @@ pyenv activate ${ENV_ID} >&2
 
 trap cleanup_on_error EXIT
 
-PIP_FLAGS="-q"
-
-[ -z "$DEBUG" ] && PIP_FLAGS=""
+PIP_FLAGS=""
+[ -z "$DEBUG" ] && PIP_FLAGS=" -q "
 
 # installing requirements (optimized)
 log "Downloading dependencies into $DOWNLOAD_TEMP";
