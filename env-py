@@ -89,7 +89,10 @@ PIP_FLAGS=""
 # installing requirements (optimized)
 log "Downloading dependencies into $DOWNLOAD_TEMP";
 cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
-    xargs -t -n1 -P9 -I {} pip download $PIP_FLAGS --dest "$DOWNLOAD_TEMP" "{}" >&2
+    xargs -t -n1 -P9 -I {} pip download $PIP_FLAGS \
+	  --dest "$DOWNLOAD_TEMP" \
+	  --exists-action w \
+	  "{}" >&2
 
 log "Installing dependencies from $REQS_FILE"
 cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
