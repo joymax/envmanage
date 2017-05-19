@@ -101,10 +101,12 @@ REQ_EXT="/tmp/ext_${REQ_ID}.txt"
 
 cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' > $REQ_NORM
 pip install -r $REQ_NORM $PIP_FLAGS --no-index --find-links "$DOWNLOAD_TEMP" >&2;
+rm $REQ_NORM;
 
 log "Install external dependencies from $REQS_FILE"
 cat ${REQS_FILE} | grep -v '^$' | grep '\-e ' | grep -v '^#' > $REQ_EXT;
 pip install -r $REQ_EXT $PIP_FLAGS >&2;
+rm $REQ_EXT;
 
 if [ -f "$OPTIONAL_REQS_FILE" ]; then
     log "Installing optional dependencies (not optimized). Assuming it's short";
