@@ -95,7 +95,7 @@ cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
 	  "{}" >&2
 
 log "Installing dependencies from $REQS_FILE"
-REQ_ID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+REQ_ID=$(python -c "import random, string; print ''.join( [random.choice(string.lowercase) for i in range(12)] )")
 REQ_NORM="/tmp/norm_${REQ_ID}.txt"
 REQ_EXT="/tmp/ext_${REQ_ID}.txt"
 
