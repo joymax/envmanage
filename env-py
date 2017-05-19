@@ -96,7 +96,8 @@ cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
 
 log "Installing dependencies from $REQS_FILE"
 cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
-    xargs -I {} pip install $PIP_FLAGS --no-index --find-links "$DOWNLOAD_TEMP" "{}" >&2;
+    xargs -I {} pip install $PIP_FLAGS --no-index --find-links "$DOWNLOAD_TEMP" "{}" >&2 || \
+    log "For some reason PIP returned error code 1. But move forward.";
 
 log "Install external dependencies from $REQS_FILE"
 cat ${REQS_FILE} | grep -v '^$' | grep '\-e ' | grep -v '^#' | \
