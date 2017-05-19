@@ -62,7 +62,7 @@ set -e
 function cleanup_on_error {
     [ $? == 0 ] && exit 0
 
-    log "Cleaning up virtualenv $ENV_ID. Non-success exit";
+    log "Cleaning up virtualenv $ENV_ID. Non-success exit. Error-code: $?";
     # removing virtualenv
     pyenv virtualenv-delete -f "${ENV_ID}"
 }
@@ -95,14 +95,16 @@ cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
 	  "{}" >&2
 
 log "Installing dependencies from $REQS_FILE"
-cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' | \
-    xargs -I {} pip install $PIP_FLAGS --no-index --find-links "$DOWNLOAD_TEMP" "{}" >&2 || \
-    log "For some reason PIP returned error code 1. But move forward.";
+REQ_ID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+REQ_NORM="/tmp/norm_${REQ_ID}.txt"
+REQ_EXT="/tmp/ext_${REQ_ID}.txt"
+
+cat ${REQS_FILE} | grep -v '^$' | grep -v '\-e ' | grep -v '^#' > $REQ_NORM
+pip install -r $REQ_NORM $PIP_FLAGS --no-index --find-links "$DOWNLOAD_TEMP" >&2;
 
 log "Install external dependencies from $REQS_FILE"
-cat ${REQS_FILE} | grep -v '^$' | grep '\-e ' | grep -v '^#' | \
-    awk '{print $2}' | \
-    xargs -I {} pip install $PIP_FLAGS --editable={} >&2;
+cat ${REQS_FILE} | grep -v '^$' | grep '\-e ' | grep -v '^#' > $REQ_EXT;
+pip install -r $REQ_EXT $PIP_FLAGS >&2;
 
 if [ -f "$OPTIONAL_REQS_FILE" ]; then
     log "Installing optional dependencies (not optimized). Assuming it's short";
